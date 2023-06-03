@@ -7,10 +7,10 @@ services:
       POSTGRES_USER: app
       POSTGRES_PASSWORD: example
       POSTGRES_DB: production-db
-#    volumes:
-#      - /prodapi/db/data/postgres_data:/var/lib/postgresql/data/
+    volumes:
+      - /docker/volumes/prodrest/db/data:/var/lib/postgresql/data/
     ports:
       - "18008:5432"
 
-#volumes:
-#  postgres_data:
+volumes:
+  postgres_data:
