@@ -1,0 +1,6 @@
+.env
+/bin/**
+
+# IntelliJ IDEA
+.idea/
+*.iml
