@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 	"errors"
-	"github.com/gofrs/uuid"
+	"github.com/gofrs/uuid/v5"
 	"github.com/hoffax/prodrest/repository"
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 	"github.com/jackc/pgx/v5"

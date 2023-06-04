@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	uuid "github.com/jackc/pgx-gofrs-uuid"
+	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 )
 
 type User struct {
-	ID        *uuid.UUID
+	ID        *pgxuuid.UUID
 	Status    string
 	Roles     []string
 	Name      string
@@ -73,7 +73,7 @@ func (r *PgRepository) GetAllUsers(ctx context.Context, params *GetAllUsersParam
 	return users, nil
 }
 
-func (r *PgRepository) GetUserByID(ctx context.Context, userID *uuid.UUID) (*User, error) {
+func (r *PgRepository) GetUserByID(ctx context.Context, userID *pgxuuid.UUID) (*User, error) {
 	user := User{}
 	err := r.db.QueryRow(ctx, `
 		SELECT
@@ -173,7 +173,7 @@ func (r *PgRepository) CreateUser(ctx context.Context, user *NewUserParams) (*Us
 }
 
 type UpdateUserParams struct {
-	ID       *uuid.UUID
+	ID       *pgxuuid.UUID
 	Status   string
 	Email    string
 	Name     string

@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/hoffax/prodrest/services"
 )
@@ -9,22 +8,21 @@ import (
 func (h *Handlers) RegisterUserRoutes() {
 	g := h.app.Group("/users")
 
-	g.Get("/", h.getAll)
-	g.Get("/:id", h.getById)
+	g.Get("/", h.getAllUsers)
+	g.Get("/:id", h.getUserById)
 	g.Post("/", h.createUser)
 	g.Put("/:id", h.updateUser)
 
 	// email checker
-	h.app.Get("/check_email/:email", h.getByEmail)
+	h.app.Get("/check_email/:email", h.getUserByEmail)
 }
 
 type GetAllUsersQuery struct {
 	StatusOptions []string `query:"status"`
 }
 
-func (h *Handlers) getAll(c *fiber.Ctx) error {
+func (h *Handlers) getAllUsers(c *fiber.Ctx) error {
 	params := new(GetAllUsersQuery)
-	fmt.Printf("/users user:%v\n", c.Locals("user"))
 	if err := c.QueryParser(params); err != nil {
 		return err
 	}
@@ -39,7 +37,7 @@ func (h *Handlers) getAll(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(users)
 }
 
-func (h *Handlers) getById(c *fiber.Ctx) error {
+func (h *Handlers) getUserById(c *fiber.Ctx) error {
 	userId, err := h.getIdParam(c)
 	if err != nil {
 		return err
@@ -57,7 +55,7 @@ func (h *Handlers) getById(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(user)
 }
 
-func (h *Handlers) getByEmail(c *fiber.Ctx) error {
+func (h *Handlers) getUserByEmail(c *fiber.Ctx) error {
 	param := struct {
 		Email string `params:"email" validate:"email,required"`
 	}{}

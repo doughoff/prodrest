@@ -1,5 +1,3 @@
-BEGIN;
-
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 DROP TYPE IF EXISTS STATUS;
@@ -18,5 +16,3 @@ CREATE TABLE "users"
 );
 
 CREATE INDEX "users_status" ON "users" ("status");
-
-COMMIT;
