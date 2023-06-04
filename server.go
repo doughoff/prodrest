@@ -3,7 +3,10 @@ package main
 import (
 	"context"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cache"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/monitor"
 	"github.com/gofiber/storage/memory"
 	"github.com/hoffax/prodrest/middleware"
 	"github.com/hoffax/prodrest/repository"
@@ -48,18 +51,19 @@ func Serve() {
 		ErrorHandler: middleware.FiberCustomErrorHandler,
 	})
 	app.Use(logger.New())
-	//app.Use(cors.New())
+	app.Use(cors.New())
 	app.Use(middleware.AuthMiddleware(memoryStore))
-	//app.Use(cache.New(cache.Config{
-	//	Expiration:   1 * time.Second,
-	//	CacheControl: true,
-	//}))
+	app.Use(cache.New(cache.Config{
+		Expiration:   1 * time.Second,
+		CacheControl: true,
+	}))
 
 	handlers := routes.NewHandlers(app, sm, memoryStore)
-	//app.Get("/metrics", monitor.New())
+	app.Get("/metrics", monitor.New())
 	handlers.RegisterAuthRoutes()
 	handlers.RegisterUserRoutes()
 	handlers.RegisterProductRoutes()
+	handlers.RegisterEntityRoutes()
 
 	err = app.Listen(":3088")
 	if err != nil {
