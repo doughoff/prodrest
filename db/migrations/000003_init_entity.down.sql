@@ -1,0 +1,4 @@
+BEGIN;
+DROP INDEX IF EXISTS "entities_status";
+DROP TABLE IF EXISTS "entities";
+COMMIT;

@@ -1,0 +1,7 @@
+BEGIN;
+DROP INDEX IF EXISTS "products_status";
+
+DROP TABLE IF EXISTS "products";
+
+DROP TYPE IF EXISTS UNITS;
+COMMIT;
