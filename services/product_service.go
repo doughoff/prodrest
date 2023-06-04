@@ -18,6 +18,8 @@ type ProductDTO struct {
 	Unit             string     `json:"unit"`
 	BatchControl     bool       `json:"batchControl"`
 	ConversionFactor int        `json:"conversionFactor"`
+	Stock            int        `json:"stock"`
+	AverageCost      int        `json:"averageCost"`
 	CreatedAt        time.Time  `json:"createdAt"`
 	UpdatedAt        time.Time  `json:"updatedAt"`
 }
