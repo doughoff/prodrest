@@ -1,17 +1,20 @@
-package servicebroker
+package services
 
 import (
 	"errors"
+	"fmt"
 	"github.com/go-playground/validator/v10"
+	"github.com/gofrs/uuid"
 	"github.com/hoffax/prodrest/repository"
+	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 )
 
-type ServiceBroker struct {
+type ServiceManager struct {
 	repo     *repository.PgRepository
 	validate *validator.Validate
 }
 
-func NewServiceBroker(repo *repository.PgRepository) (*ServiceBroker, error) {
+func NewServiceManager(repo *repository.PgRepository) (*ServiceManager, error) {
 	validate := validator.New()
 	err := validate.RegisterValidation("custom_status", func(fl validator.FieldLevel) bool {
 		value := fl.Field()
@@ -32,8 +35,32 @@ func NewServiceBroker(repo *repository.PgRepository) (*ServiceBroker, error) {
 		return nil, errors.New("could not load custom_unit validator")
 	}
 
-	return &ServiceBroker{
+	return &ServiceManager{
 		repo:     repo,
 		validate: validate,
 	}, nil
+}
+
+func (s *ServiceManager) parseUUID(dbuuid *pgxuuid.UUID) (*uuid.UUID, error) {
+	uuidValue, err := dbuuid.UUIDValue()
+	if err != nil {
+		return nil, err
+	}
+
+	result := uuid.UUID(uuidValue.Bytes)
+	return &result, nil
+}
+
+type UniqueConstraintError struct {
+	Message string
+}
+
+func (u UniqueConstraintError) Error() string {
+	return u.Message
+}
+
+func NewUniqueConstrainError(field string) *UniqueConstraintError {
+	return &UniqueConstraintError{
+		fmt.Sprintf("unique constraint error on: %v", field),
+	}
 }

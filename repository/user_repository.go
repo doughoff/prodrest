@@ -31,7 +31,7 @@ func (r *PgRepository) GetAllUsers(ctx context.Context, params *GetAllUsersParam
 			email,
 			name,
 			password,
-			roles,
+			Roles,
 			created_at,
 			updated_at
 		FROM "users"
@@ -82,7 +82,7 @@ func (r *PgRepository) GetUserByID(ctx context.Context, userID *uuid.UUID) (*Use
 			email,
 			name,
 			password,
-			roles,
+			Roles,
 			created_at,
 			updated_at
 		FROM "users"
@@ -114,12 +114,12 @@ func (r *PgRepository) GetUserByEmail(ctx context.Context, email string) (*User,
 			email,
 			name,
 			password,
-			roles,
+			Roles,
 			created_at,
 			updated_at
 		FROM "users"
 		WHERE
-		    id = $1
+		    email = $1
 	`, email).Scan(
 		&user.ID,
 		&user.Status,
@@ -144,12 +144,12 @@ type NewUserParams struct {
 	Roles    []string
 }
 
-func (r *PgRepository) NewUser(ctx context.Context, user *NewUserParams) (*User, error) {
+func (r *PgRepository) CreateUser(ctx context.Context, user *NewUserParams) (*User, error) {
 	newUser := &User{}
 	err := r.db.QueryRow(ctx, `
-		insert into "users"(email, name, password, roles) 
+		insert into "users"(email, name, password, Roles) 
 		values ($1, $2, $3, $4) 
-		returning id, status, email, name, password, roles, created_at, updated_at
+		returning id, status, email, name, password, Roles, created_at, updated_at
 	`,
 		user.Email,
 		user.Name,
@@ -174,11 +174,11 @@ func (r *PgRepository) NewUser(ctx context.Context, user *NewUserParams) (*User,
 
 type UpdateUserParams struct {
 	ID       *uuid.UUID
-	status   []string
+	Status   string
 	Email    string
 	Name     string
 	Password string
-	roles    []string
+	Roles    []string
 }
 
 func (r *PgRepository) UpdateUser(ctx context.Context, params *UpdateUserParams) (*User, error) {
@@ -190,18 +190,18 @@ func (r *PgRepository) UpdateUser(ctx context.Context, params *UpdateUserParams)
 			email = $3,
 			name = $4,
 			password = $5,
-			roles = $6,
+			Roles = $6,
 			updated_at = now()
 		where 
 		    id = $1
-		returning id, status, email, name, password, roles, created_at, updated_at
+		returning id, status, email, name, password, Roles, created_at, updated_at
 	`,
 		params.ID,
-		params.status,
+		params.Status,
 		params.Email,
 		params.Name,
 		params.Password,
-		params.roles,
+		params.Roles,
 	).Scan(
 		&updatedUser.ID,
 		&updatedUser.Status,
