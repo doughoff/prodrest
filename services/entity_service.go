@@ -65,7 +65,6 @@ func (s *ServiceManager) CreateEntity(ctx context.Context, params *CreateEntityP
 			if err != pgx.ErrNoRows {
 				return nil, err
 			}
-			return nil, err
 		}
 	}
 

@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/hoffax/prodrest/constants"
 	"github.com/hoffax/prodrest/services"
 )
 
@@ -62,7 +63,7 @@ func (h *Handlers) getUserByEmail(c *fiber.Ctx) error {
 
 	err := c.ParamsParser(&param)
 	if err != nil {
-		return h.InvalidParams("invalid email on url params")
+		return constants.InvalidParams("invalid email on url params")
 	}
 
 	user, err := h.sm.FetchUserByEmail(c.Context(), param.Email)
@@ -88,7 +89,7 @@ func (h *Handlers) createUser(c *fiber.Ctx) error {
 	userBody := new(CreateUserBody)
 
 	if err := c.BodyParser(userBody); err != nil {
-		return err
+		return constants.InvalidBody()
 	}
 
 	createdUser, err := h.sm.CreateUser(c.Context(), &services.CreateUserParams{
@@ -115,7 +116,7 @@ type UpdateUserBody struct {
 func (h *Handlers) updateUser(c *fiber.Ctx) error {
 	userId, err := h.getIdParam(c)
 	if err != nil {
-		return err
+		return constants.InvalidBody()
 	}
 
 	userBody := new(UpdateUserBody)

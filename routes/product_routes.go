@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/hoffax/prodrest/constants"
 	"github.com/hoffax/prodrest/services"
 )
 
@@ -74,7 +75,7 @@ type CreateProductBody struct {
 func (h *Handlers) createProduct(c *fiber.Ctx) error {
 	params := new(CreateProductBody)
 	if err := c.BodyParser(params); err != nil {
-		return err
+		return constants.InvalidBody()
 	}
 
 	product, err := h.sm.CreateProduct(c.Context(), &services.CreateProductParams{
@@ -108,7 +109,7 @@ func (h *Handlers) updateProduct(c *fiber.Ctx) error {
 
 	params := new(UpdateProductBody)
 	if err := c.BodyParser(params); err != nil {
-		return err
+		return constants.InvalidBody()
 	}
 
 	product, err := h.sm.UpdateProduct(c.Context(), &services.UpdateProductParams{

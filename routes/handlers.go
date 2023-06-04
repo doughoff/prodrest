@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/storage/memory"
 	"github.com/gofrs/uuid"
+	"github.com/hoffax/prodrest/constants"
 	"github.com/hoffax/prodrest/services"
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 )
@@ -29,7 +30,7 @@ func (h *Handlers) getIdParam(c *fiber.Ctx) (*pgxuuid.UUID, error) {
 
 	err := c.ParamsParser(&param) // "{"id": 111}"
 	if err != nil {
-		return nil, h.InvalidParams("invalid id on url query string")
+		return nil, constants.InvalidParams("invalid id on url query string")
 	}
 
 	id := pgxuuid.UUID(param.ID.Bytes())

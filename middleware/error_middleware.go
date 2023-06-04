@@ -5,10 +5,19 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/hoffax/prodrest/constants"
 	"github.com/hoffax/prodrest/services"
 )
 
 func FiberCustomErrorHandler(c *fiber.Ctx, err error) error {
+	var invalidBodyError *constants.InvalidBodyError
+	if errors.As(err, &invalidBodyError) {
+		return c.Status(fiber.StatusBadRequest).JSON(map[string]string{
+			"code":    "bad_formatted_body",
+			"message": err.Error(),
+		})
+	}
+
 	var constraintError *services.UniqueConstraintError
 	if errors.As(err, &constraintError) {
 		return c.Status(fiber.StatusBadRequest).JSON(map[string]string{

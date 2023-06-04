@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/hoffax/prodrest/constants"
 	"github.com/hoffax/prodrest/services"
 )
 
@@ -24,7 +25,7 @@ type GetAllEntitiesQuery struct {
 func (h *Handlers) getAllEntities(c *fiber.Ctx) error {
 	params := new(GetAllEntitiesQuery)
 	if err := c.QueryParser(params); err != nil {
-		return err
+		return constants.InvalidBody()
 	}
 
 	if params.Limit <= 9 {
@@ -71,7 +72,7 @@ type CreateEntityBody struct {
 func (h *Handlers) createEntity(c *fiber.Ctx) error {
 	body := new(CreateEntityBody)
 	if err := c.BodyParser(body); err != nil {
-		return err
+		return constants.InvalidBody()
 	}
 
 	entity, err := h.sm.CreateEntity(c.Context(), &services.CreateEntityParams{

@@ -2,7 +2,6 @@ package services
 
 import (
 	"errors"
-	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofrs/uuid/v5"
 	"github.com/hoffax/prodrest/repository"
@@ -49,32 +48,4 @@ func (s *ServiceManager) parseUUID(dbuuid *pgxuuid.UUID) (*uuid.UUID, error) {
 
 	result := uuid.UUID(uuidValue.Bytes)
 	return &result, nil
-}
-
-type UniqueConstraintError struct {
-	Message string
-}
-
-func (u UniqueConstraintError) Error() string {
-	return u.Message
-}
-
-func NewUniqueConstrainError(field string) *UniqueConstraintError {
-	return &UniqueConstraintError{
-		fmt.Sprintf("unique constraint error on: %v", field),
-	}
-}
-
-type RequiredFieldError struct {
-	Message string
-}
-
-func (u RequiredFieldError) Error() string {
-	return u.Message
-}
-
-func NewRequiredFieldError(field string) *RequiredFieldError {
-	return &RequiredFieldError{
-		fmt.Sprintf("required field: %v", field),
-	}
 }
