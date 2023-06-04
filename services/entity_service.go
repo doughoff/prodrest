@@ -180,7 +180,7 @@ func (s *ServiceManager) FetchEntities(ctx context.Context, params *FetchEntitie
 		return nil, err
 	}
 
-	var entitiesDTO []*EntityDTO
+	entitiesDTO := make([]*EntityDTO, 0)
 	for _, entity := range result.Items {
 		entitiesDTO = append(entitiesDTO, s.toEntityDTO(entity))
 	}
