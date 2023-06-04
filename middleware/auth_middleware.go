@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/storage/memory"
-	"time"
+	"github.com/hoffax/prodrest/constants"
 )
 
 type SessionData struct {
@@ -42,7 +42,7 @@ func AuthMiddleware(store *memory.Storage) func(*fiber.Ctx) error {
 		c.Locals("userId", sessionData.UserId)
 		c.Locals("roles", sessionData.Roles)
 
-		if err = store.Set(sessionID, sessionDataBytes, 3*time.Hour); err != nil {
+		if err = store.Set(sessionID, sessionDataBytes, constants.SessionDuration); err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, "failed to refresh session")
 		}
 

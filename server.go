@@ -44,7 +44,7 @@ func Serve() {
 	}
 
 	memoryStore := memory.New(memory.Config{
-		GCInterval: 1 * time.Hour,
+		GCInterval: 5 * time.Second,
 	})
 
 	app := fiber.New(fiber.Config{

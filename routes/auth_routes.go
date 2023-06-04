@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofrs/uuid"
+	"github.com/hoffax/prodrest/constants"
 	"github.com/hoffax/prodrest/middleware"
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
-	"time"
 )
 
 func (h *Handlers) RegisterAuthRoutes() {
@@ -56,7 +56,7 @@ func (h *Handlers) login(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	err = h.sessionStore.Set(sessionId.String(), sessionDataBytes, 3*time.Hour)
+	err = h.sessionStore.Set(sessionId.String(), sessionDataBytes, constants.SessionDuration)
 	if err != nil {
 		return err
 	}
