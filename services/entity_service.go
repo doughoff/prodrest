@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"github.com/gofrs/uuid/v5"
+	"github.com/hoffax/prodrest/constants"
 	"github.com/hoffax/prodrest/repository"
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 	"github.com/jackc/pgx/v5"
@@ -54,13 +55,13 @@ type CreateEntityParams struct {
 
 func (s *ServiceManager) CreateEntity(ctx context.Context, params *CreateEntityParams) (*EntityDTO, error) {
 	if !s.validateRUCOrCI(params.RUC, params.CI) {
-		return nil, NewRequiredFieldError("ruc or ci, at least one is required")
+		return nil, constants.NewRequiredFieldError("ruc or ci, at least one is required")
 	}
 
 	if params.RUC != "" {
 		_, err := s.repo.GetEntityByRUC(ctx, params.RUC)
 		if err == nil {
-			return nil, NewUniqueConstrainError("ruc")
+			return nil, constants.NewUniqueConstrainError("ruc")
 		} else {
 			if err != pgx.ErrNoRows {
 				return nil, err
@@ -71,7 +72,7 @@ func (s *ServiceManager) CreateEntity(ctx context.Context, params *CreateEntityP
 	if params.CI != "" {
 		_, err := s.repo.GetEntityByCI(ctx, params.CI)
 		if err == nil {
-			return nil, NewUniqueConstrainError("ci")
+			return nil, constants.NewUniqueConstrainError("ci")
 		} else {
 			if err != pgx.ErrNoRows {
 				return nil, err
@@ -102,14 +103,14 @@ type UpdateEntityParams struct {
 
 func (s *ServiceManager) UpdateEntity(ctx context.Context, params *UpdateEntityParams) (*EntityDTO, error) {
 	if !s.validateRUCOrCI(params.RUC, params.CI) {
-		return nil, NewRequiredFieldError("ruc or ci, at least one is required")
+		return nil, constants.NewRequiredFieldError("ruc or ci, at least one is required")
 	}
 
 	if params.RUC != "" {
 		entity, err := s.repo.GetEntityByRUC(ctx, params.RUC)
 		if err == nil {
 			if entity.ID != params.ID {
-				return nil, NewUniqueConstrainError("ruc")
+				return nil, constants.NewUniqueConstrainError("ruc")
 			}
 		} else {
 			if err != pgx.ErrNoRows {
@@ -123,7 +124,7 @@ func (s *ServiceManager) UpdateEntity(ctx context.Context, params *UpdateEntityP
 		entity, err := s.repo.GetEntityByCI(ctx, params.CI)
 		if err == nil {
 			if entity.ID != params.ID {
-				return nil, NewUniqueConstrainError("ci")
+				return nil, constants.NewUniqueConstrainError("ci")
 			}
 		} else {
 			if err != pgx.ErrNoRows {

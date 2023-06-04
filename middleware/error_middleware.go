@@ -6,7 +6,6 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/hoffax/prodrest/constants"
-	"github.com/hoffax/prodrest/services"
 )
 
 func FiberCustomErrorHandler(c *fiber.Ctx, err error) error {
@@ -18,7 +17,15 @@ func FiberCustomErrorHandler(c *fiber.Ctx, err error) error {
 		})
 	}
 
-	var constraintError *services.UniqueConstraintError
+	var requiredFieldErr *constants.RequiredFieldError
+	if errors.As(err, &requiredFieldErr) {
+		return c.Status(fiber.StatusBadRequest).JSON(map[string]string{
+			"code":    "required_field",
+			"message": requiredFieldErr.Error(),
+		})
+	}
+
+	var constraintError *constants.UniqueConstraintError
 	if errors.As(err, &constraintError) {
 		return c.Status(fiber.StatusBadRequest).JSON(map[string]string{
 			"code":    "unique_violation",

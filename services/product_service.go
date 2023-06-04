@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/gofrs/uuid/v5"
+	"github.com/hoffax/prodrest/constants"
 	"github.com/hoffax/prodrest/repository"
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 	"github.com/jackc/pgx/v5"
@@ -59,7 +60,7 @@ func (s *ServiceManager) CreateProduct(ctx context.Context, params *CreateProduc
 
 	_, err = s.repo.GetProductByBarcode(ctx, params.Barcode)
 	if err == nil {
-		return nil, NewUniqueConstrainError("barcode")
+		return nil, constants.NewUniqueConstrainError("barcode")
 	} else {
 		if err != pgx.ErrNoRows {
 			return nil, err
@@ -104,7 +105,7 @@ func (s *ServiceManager) UpdateProduct(ctx context.Context, params *UpdateProduc
 	if product.Barcode != params.Barcode {
 		_, err = s.repo.GetProductByBarcode(ctx, params.Barcode)
 		if err == nil {
-			return nil, NewUniqueConstrainError("barcode")
+			return nil, constants.NewUniqueConstrainError("barcode")
 		} else {
 			if err != pgx.ErrNoRows {
 				return nil, err

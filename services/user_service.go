@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/gofrs/uuid/v5"
+	"github.com/hoffax/prodrest/constants"
 	"github.com/hoffax/prodrest/repository"
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 	"github.com/jackc/pgx/v5"
@@ -52,7 +53,7 @@ func (s *ServiceManager) CreateUser(ctx context.Context, params *CreateUserParam
 
 	_, err = s.repo.GetUserByEmail(ctx, params.Email)
 	if err == nil {
-		return nil, NewUniqueConstrainError("email")
+		return nil, constants.NewUniqueConstrainError("email")
 	} else {
 		if err != pgx.ErrNoRows {
 			return nil, err
@@ -90,7 +91,7 @@ func (s *ServiceManager) UpdateUser(ctx context.Context, params *UpdateUserParam
 	userWithEmail, err := s.repo.GetUserByEmail(ctx, params.Email)
 	if err == nil {
 		if userWithEmail.ID != params.ID {
-			return nil, NewUniqueConstrainError("email")
+			return nil, constants.NewUniqueConstrainError("email")
 		}
 	} else {
 		if err != pgx.ErrNoRows {
