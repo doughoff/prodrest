@@ -9,6 +9,22 @@ import (
 )
 
 func FiberCustomErrorHandler(c *fiber.Ctx, err error) error {
+	var notFoundError *constants.NotFoundError
+	if errors.As(err, &notFoundError) {
+		return c.Status(fiber.StatusNotFound).JSON(map[string]string{
+			"code":    "resource_not_found",
+			"message": err.Error(),
+		})
+	}
+
+	var invalidParams *constants.InvalidParamsError
+	if errors.As(err, &invalidParams) {
+		return c.Status(fiber.StatusBadRequest).JSON(map[string]string{
+			"code":    "invalid_params",
+			"message": err.Error(),
+		})
+	}
+
 	var invalidBodyError *constants.InvalidBodyError
 	if errors.As(err, &invalidBodyError) {
 		return c.Status(fiber.StatusBadRequest).JSON(map[string]string{

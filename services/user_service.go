@@ -88,6 +88,14 @@ func (s *ServiceManager) UpdateUser(ctx context.Context, params *UpdateUserParam
 		return nil, err
 	}
 
+	_, err = s.repo.GetUserByID(ctx, params.ID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, constants.NewNotFoundError()
+		}
+		return nil, err
+	}
+
 	userWithEmail, err := s.repo.GetUserByEmail(ctx, params.Email)
 	if err == nil {
 		if userWithEmail.ID != params.ID {
@@ -99,7 +107,7 @@ func (s *ServiceManager) UpdateUser(ctx context.Context, params *UpdateUserParam
 		}
 	}
 
-	user, err := s.repo.UpdateUser(ctx, &repository.UpdateUserParams{
+	updatedUser, err := s.repo.UpdateUser(ctx, &repository.UpdateUserParams{
 		ID:       params.ID,
 		Status:   params.Status,
 		Email:    params.Email,
@@ -111,7 +119,7 @@ func (s *ServiceManager) UpdateUser(ctx context.Context, params *UpdateUserParam
 		return nil, err
 	}
 
-	return s.toUserDTO(user), nil
+	return s.toUserDTO(updatedUser), nil
 }
 
 type FetchUsersParams struct {
@@ -155,7 +163,7 @@ func (s *ServiceManager) FetchUserById(ctx context.Context, userID *pgxuuid.UUID
 	user, err := s.repo.GetUserByID(ctx, userID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, constants.NewNotFoundError()
 		}
 		return nil, err
 	}
@@ -167,7 +175,7 @@ func (s *ServiceManager) FetchUserByEmail(ctx context.Context, email string) (*U
 	user, err := s.repo.GetUserByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, constants.NewNotFoundError()
 		}
 		return nil, err
 	}

@@ -56,10 +56,6 @@ func (h *Handlers) getEntityById(c *fiber.Ctx) error {
 		return err
 	}
 
-	if entity == nil {
-		return c.Status(fiber.StatusNotFound).Send([]byte{})
-	}
-
 	return c.Status(fiber.StatusOK).JSON(entity)
 }
 

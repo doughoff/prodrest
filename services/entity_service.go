@@ -102,6 +102,14 @@ type UpdateEntityParams struct {
 }
 
 func (s *ServiceManager) UpdateEntity(ctx context.Context, params *UpdateEntityParams) (*EntityDTO, error) {
+	entity, err := s.repo.GetEntityById(ctx, params.ID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, constants.NewNotFoundError()
+		}
+		return nil, err
+	}
+
 	if !s.validateRUCOrCI(params.RUC, params.CI) {
 		return nil, constants.NewRequiredFieldError("ruc or ci, at least one is required")
 	}
@@ -134,7 +142,7 @@ func (s *ServiceManager) UpdateEntity(ctx context.Context, params *UpdateEntityP
 		}
 	}
 
-	entity, err := s.repo.UpdateEntity(ctx, &repository.UpdateEntityParams{
+	entity, err = s.repo.UpdateEntity(ctx, &repository.UpdateEntityParams{
 		ID:     params.ID,
 		Status: params.Status,
 		Name:   params.Name,
@@ -151,7 +159,7 @@ func (s *ServiceManager) UpdateEntity(ctx context.Context, params *UpdateEntityP
 func (s *ServiceManager) GetEntityByID(ctx context.Context, id *pgxuuid.UUID) (*EntityDTO, error) {
 	entity, err := s.repo.GetEntityById(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, constants.NewNotFoundError()
 	}
 
 	return s.toEntityDTO(entity), nil

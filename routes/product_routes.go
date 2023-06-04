@@ -57,10 +57,6 @@ func (h *Handlers) getProductById(c *fiber.Ctx) error {
 		return err
 	}
 
-	if product == nil {
-		return c.Status(fiber.StatusNotFound).Send([]byte{})
-	}
-
 	return c.Status(fiber.StatusOK).JSON(product)
 }
 
@@ -134,10 +130,6 @@ func (h *Handlers) checkBarcode(c *fiber.Ctx) error {
 	product, err := h.sm.FetchProductByBarcode(c.Context(), barcode)
 	if err != nil {
 		return err
-	}
-
-	if product == nil {
-		return c.Status(fiber.StatusNotFound).Send([]byte{})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(product)

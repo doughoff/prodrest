@@ -29,3 +29,17 @@ func InvalidBody() *InvalidBodyError {
 		fmt.Sprintf("invalid json on request body"),
 	}
 }
+
+type NotFoundError struct {
+	Message string
+}
+
+func (u NotFoundError) Error() string {
+	return u.Message
+}
+
+func NewNotFoundError() *NotFoundError {
+	return &NotFoundError{
+		fmt.Sprintf("resource not found"),
+	}
+}

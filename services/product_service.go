@@ -99,6 +99,9 @@ func (s *ServiceManager) UpdateProduct(ctx context.Context, params *UpdateProduc
 
 	product, err := s.repo.GetProductByID(ctx, params.ID)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, constants.NewNotFoundError()
+		}
 		return nil, err
 	}
 
@@ -172,7 +175,7 @@ func (s *ServiceManager) FetchProductById(ctx context.Context, id *pgxuuid.UUID)
 	product, err := s.repo.GetProductByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, constants.NewNotFoundError()
 		}
 		return nil, err
 	}
@@ -184,7 +187,7 @@ func (s *ServiceManager) FetchProductByBarcode(ctx context.Context, barcode stri
 	product, err := s.repo.GetProductByBarcode(ctx, barcode)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil
+			return nil, constants.NewNotFoundError()
 		}
 		return nil, err
 	}

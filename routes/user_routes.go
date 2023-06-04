@@ -49,10 +49,6 @@ func (h *Handlers) getUserById(c *fiber.Ctx) error {
 		return err
 	}
 
-	if user == nil {
-		return c.Status(fiber.StatusNotFound).Send([]byte{})
-	}
-
 	return c.Status(fiber.StatusOK).JSON(user)
 }
 
@@ -69,10 +65,6 @@ func (h *Handlers) getUserByEmail(c *fiber.Ctx) error {
 	user, err := h.sm.FetchUserByEmail(c.Context(), param.Email)
 	if err != nil {
 		return err
-	}
-
-	if user == nil {
-		return c.Status(fiber.StatusNotFound).Send([]byte{})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(user)
