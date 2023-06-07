@@ -29,3 +29,17 @@ func NewRequiredFieldError(field string) *RequiredFieldError {
 		fmt.Sprintf("required field: %v", field),
 	}
 }
+
+type InvalidOperationError struct {
+	Message string
+}
+
+func (u InvalidOperationError) Error() string {
+	return u.Message
+}
+
+func NewInvalidOperationError(additionalInfo string) *InvalidOperationError {
+	return &InvalidOperationError{
+		fmt.Sprintf("required field: %v", additionalInfo),
+	}
+}

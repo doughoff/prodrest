@@ -135,7 +135,7 @@ func (s *ServiceManager) UpdateProduct(ctx context.Context, params *UpdateProduc
 type FetchProductsParams struct {
 	Search        string
 	StatusOptions []string `validate:"dive,custom_status"`
-	Limit         int      `validate:"required,gte=1,lte=100"`
+	Limit         int      `validate:"required,gte=10,lte=100"`
 	Offset        int      `validate:"gte=0"`
 }
 

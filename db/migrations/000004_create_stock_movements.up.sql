@@ -38,7 +38,6 @@ CREATE INDEX "stock_movement_status" ON "stock_movements" ("status");
 CREATE INDEX "stock_movement_type" ON "stock_movements" ("type");
 CREATE INDEX "stock_movement_entity_id" ON "stock_movements" ("entity_id");
 CREATE INDEX "stock_movement_date" ON "stock_movements" ("date");
-CREATE INDEX "stock_movement_date_month" ON "stock_movements" (date_trunc('month', "date"));
 
 CREATE TABLE IF NOT EXISTS "stock_movement_items"
 (
