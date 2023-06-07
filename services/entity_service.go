@@ -54,6 +54,11 @@ type CreateEntityParams struct {
 }
 
 func (s *ServiceManager) CreateEntity(ctx context.Context, params *CreateEntityParams) (*EntityDTO, error) {
+	err := s.validate.Struct(params)
+	if err != nil {
+		return nil, err
+	}
+
 	if !s.validateRUCOrCI(params.RUC, params.CI) {
 		return nil, constants.NewRequiredFieldError("ruc or ci, at least one is required")
 	}
@@ -77,7 +82,6 @@ func (s *ServiceManager) CreateEntity(ctx context.Context, params *CreateEntityP
 			if err != pgx.ErrNoRows {
 				return nil, err
 			}
-			return nil, err
 		}
 	}
 
@@ -102,6 +106,11 @@ type UpdateEntityParams struct {
 }
 
 func (s *ServiceManager) UpdateEntity(ctx context.Context, params *UpdateEntityParams) (*EntityDTO, error) {
+	err := s.validate.Struct(params)
+	if err != nil {
+		return nil, err
+	}
+
 	entity, err := s.repo.GetEntityById(ctx, params.ID)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -117,28 +126,34 @@ func (s *ServiceManager) UpdateEntity(ctx context.Context, params *UpdateEntityP
 	if params.RUC != "" {
 		entity, err := s.repo.GetEntityByRUC(ctx, params.RUC)
 		if err == nil {
-			if entity.ID != params.ID {
+			equalIds, err := s.comparePgxUUID(entity.ID, params.ID)
+			if err != nil {
+				return nil, constants.InvalidParams("could not convert id")
+			}
+			if !equalIds {
 				return nil, constants.NewUniqueConstrainError("ruc")
 			}
 		} else {
 			if err != pgx.ErrNoRows {
 				return nil, err
 			}
-			return nil, err
 		}
 	}
 
 	if params.CI != "" {
 		entity, err := s.repo.GetEntityByCI(ctx, params.CI)
 		if err == nil {
-			if entity.ID != params.ID {
+			equalIds, err := s.comparePgxUUID(entity.ID, params.ID)
+			if err != nil {
+				return nil, constants.InvalidParams("could not convert id")
+			}
+			if !equalIds {
 				return nil, constants.NewUniqueConstrainError("ci")
 			}
 		} else {
 			if err != pgx.ErrNoRows {
 				return nil, err
 			}
-			return nil, err
 		}
 	}
 

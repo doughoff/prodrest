@@ -2,6 +2,7 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofrs/uuid"
 	"github.com/hoffax/prodrest/constants"
@@ -26,6 +27,7 @@ type LoginPayload struct {
 func (h *Handlers) login(c *fiber.Ctx) error {
 	payload := new(LoginPayload)
 	if err := c.BodyParser(payload); err != nil {
+		fmt.Printf("err: %v\n", err)
 		return err
 	}
 
