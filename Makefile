@@ -4,13 +4,13 @@ ifneq (,$(wildcard ./.env))
 endif
 
 db-migrate:
-	${GOPATH}/bin/migrate -database ${DB_URL} -path db/migrations up
+	docker run -v ./db/migrations:/migrations --network host migrate/migrate:v4.16.1 -path=/migrations/ -database ${DB_URL} up
 
 db-rollback:
-	${GOPATH}/bin/migrate -database ${DB_URL} -path db/migrations down 1
+	docker run -v ./db/migrations:/migrations --network host migrate/migrate:v4.16.1 -path=/migrations/ -database ${DB_URL} down -all
 
 db-reset:
-	${GOPATH}/bin/migrate drop ${DB_URL}
+	docker run -v ./db/migrations:/migrations --network host migrate/migrate:v4.16.1 -path=/migrations/ -database ${DB_URL} drop -f
 
 build:
 	@go build -o bin/production-api
