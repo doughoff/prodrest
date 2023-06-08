@@ -23,12 +23,12 @@ import (
 
 type CustomTracer struct{}
 
-func (t *CustomTracer) TraceQueryStart(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryStartData) context.Context {
+func (t *CustomTracer) TraceQueryStart(ctx context.Context, _ *pgx.Conn, data pgx.TraceQueryStartData) context.Context {
 	log.Printf("Start Query: %s \nArgs: %+v\n", data.SQL, data.Args)
 	return ctx
 }
 
-func (t *CustomTracer) TraceQueryEnd(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryEndData) {
+func (t *CustomTracer) TraceQueryEnd(_ context.Context, _ *pgx.Conn, data pgx.TraceQueryEndData) {
 	if data.Err != nil {
 		fmt.Printf("Query Error: %v\n", data.Err)
 	} else {
