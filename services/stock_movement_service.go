@@ -25,6 +25,20 @@ type StockMovementDTO struct {
 	CreatedByUserName   string     `json:"createdByUserName"`
 	CancelledByUserID   *uuid.UUID `json:"cancelledByUserId"`
 	CancelledByUserName string     `json:"cancelledByUserName"`
+
+	Items []*StockMovementItemDTO `json:"items"`
+}
+
+type StockMovementItemDTO struct {
+	Id              *uuid.UUID `json:"id"`
+	StockMovementID *uuid.UUID `json:"StockMovementId"`
+	ProductID       *uuid.UUID `json:"productId"`
+	ProductName     string     `json:"productName"`
+	Quantity        int        `json:"quantity"`
+	Price           int        `json:"price"`
+	Batch           string     `json:"batch"`
+	CreatedAt       time.Time  `json:"createdAt"`
+	UpdatedAt       time.Time  `json:"updatedAt"`
 }
 
 func (s *ServiceManager) toStockMovementDTO(stockMovement *repository.StockMovement) *StockMovementDTO {
@@ -48,6 +62,31 @@ func (s *ServiceManager) toStockMovementDTO(stockMovement *repository.StockMovem
 		cancelledByUserId = nil
 	}
 
+	items := make([]*StockMovementItemDTO, 0)
+	for _, item := range stockMovement.Items {
+		productId, err := s.parseUUID(item.ProductID)
+		if err != nil {
+			productId = nil
+		}
+
+		stockMovementItemId, err := s.parseUUID(item.ID)
+		if err != nil {
+			stockMovementItemId = nil
+		}
+
+		items = append(items, &StockMovementItemDTO{
+			Id:              stockMovementItemId,
+			StockMovementID: stockMovementId,
+			ProductID:       productId,
+			ProductName:     item.ProductName,
+			Quantity:        item.Quantity,
+			Price:           item.Price,
+			Batch:           item.Batch,
+			CreatedAt:       item.CreatedAt,
+			UpdatedAt:       item.UpdatedAt,
+		})
+	}
+
 	return &StockMovementDTO{
 		ID:                  stockMovementId,
 		Status:              stockMovement.Status,
@@ -62,6 +101,7 @@ func (s *ServiceManager) toStockMovementDTO(stockMovement *repository.StockMovem
 		CreatedByUserName:   stockMovement.CreatedByUserName,
 		CancelledByUserID:   cancelledByUserId,
 		CancelledByUserName: stockMovement.CancelledByUserName,
+		Items:               items,
 	}
 }
 
@@ -69,7 +109,15 @@ type CreateStockMovementParams struct {
 	Type     string    `validate:"required"`
 	Date     time.Time `validate:"required"`
 	EntityID *pgxuuid.UUID
-	UserID   *pgxuuid.UUID `validate:"required"`
+	UserID   *pgxuuid.UUID      `validate:"required"`
+	Items    []*CreateStockItem `validate:"required,min=1,dive,required"`
+}
+
+type CreateStockItem struct {
+	ProductID *pgxuuid.UUID `validate:"required"`
+	Quantity  int           `validate:"required"`
+	Price     int           `validate:"required"`
+	Batch     string        `validate:""`
 }
 
 func (s *ServiceManager) CreateStockMovement(ctx context.Context, params *CreateStockMovementParams) (*StockMovementDTO, error) {
@@ -90,11 +138,22 @@ func (s *ServiceManager) CreateStockMovement(ctx context.Context, params *Create
 		params.EntityID = nil
 	}
 
+	items := make([]*repository.CreateStockItem, 0)
+	for _, item := range params.Items {
+		items = append(items, &repository.CreateStockItem{
+			ProductID: item.ProductID,
+			Quantity:  item.Quantity,
+			Price:     item.Price,
+			Batch:     item.Batch,
+		})
+	}
+
 	stockMovement, err := s.repo.CreateStockMovement(ctx, &repository.CreateStockMovementParams{
 		Type:      params.Type,
 		Date:      params.Date,
 		EntityID:  params.EntityID,
 		CreatedBy: params.UserID,
+		Items:     items,
 	})
 	if err != nil {
 		return nil, err
