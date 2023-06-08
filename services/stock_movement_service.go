@@ -27,6 +27,7 @@ type StockMovementDTO struct {
 	CancelledByUserName string     `json:"cancelledByUserName"`
 
 	Items []*StockMovementItemDTO `json:"items"`
+	Total int                     `json:"total"`
 }
 
 type StockMovementItemDTO struct {
@@ -102,6 +103,7 @@ func (s *ServiceManager) toStockMovementDTO(stockMovement *repository.StockMovem
 		CancelledByUserID:   cancelledByUserId,
 		CancelledByUserName: stockMovement.CancelledByUserName,
 		Items:               items,
+		Total:               stockMovement.Total,
 	}
 }
 
