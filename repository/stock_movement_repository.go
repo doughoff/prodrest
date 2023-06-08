@@ -48,12 +48,12 @@ func (r *PgRepository) FetchStockMovements(ctx context.Context, param *FetchStoc
 			sm.created_at,
 			sm.updated_at,
 			e.id,
-			coalesce(e.name, '-'),
-			coalesce(e.ruc, e.ci, '-'),
+			coalesce(e.name, ''),
+			coalesce(e.ruc, e.ci, ''),
 			cu.id,
 			cu.name,
 			cu2.id,
-			coalesce(cu2.name, '-')
+			coalesce(cu2.name, '')
 		FROM "stock_movements" sm
 		LEFT JOIN "entities" e ON e.id = sm.entity_id
 		LEFT JOIN "users" cu ON cu.id = sm.created_by_user_id
@@ -127,6 +127,8 @@ func (r *PgRepository) CreateStockMovement(ctx context.Context, param *CreateSto
 			status,
 			type,
 			date,
+		    entity_id,
+		    created_by_user_id,
 			created_at,
 			updated_at
 	`, "ACTIVE", param.Type, param.Date, param.EntityID, param.CreatedBy).Scan(
@@ -134,6 +136,8 @@ func (r *PgRepository) CreateStockMovement(ctx context.Context, param *CreateSto
 		&sm.Status,
 		&sm.Type,
 		&sm.Date,
+		&sm.EntityID,
+		&sm.CreatedByUserID,
 		&sm.CreatedAt,
 		&sm.UpdatedAt,
 	)
@@ -163,6 +167,8 @@ func (r *PgRepository) UpdateStockMovement(ctx context.Context, param *UpdateSto
 			status,
 			type,
 			date,
+		    entity_id,
+		    created_by_user_id,
 			created_at,
 			updated_at
 	`, param.ID, param.Date, param.EntityID).Scan(
@@ -170,6 +176,8 @@ func (r *PgRepository) UpdateStockMovement(ctx context.Context, param *UpdateSto
 		&sm.Status,
 		&sm.Type,
 		&sm.Date,
+		&sm.EntityID,
+		&sm.CreatedByUserID,
 		&sm.CreatedAt,
 		&sm.UpdatedAt,
 	)
@@ -228,12 +236,12 @@ func (r *PgRepository) FetchStockMovementByID(ctx context.Context, id *pgxuuid.U
 			sm.created_at,
 			sm.updated_at,
 			e.id,
-			coalesce(e.name, '-'),
-			coalesce(e.ruc, e.ci, '-'),
+			coalesce(e.name, ''),
+			coalesce(e.ruc, e.ci, ''),
 			cu.id,
 			cu.name,
 			cu2.id,
-			coalesce(cu2.name, '-')
+			coalesce(cu2.name, '')
 		FROM "stock_movements" sm
 		LEFT JOIN "entities" e ON e.id = sm.entity_id
 		LEFT JOIN "users" cu ON cu.id = sm.created_by_user_id

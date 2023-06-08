@@ -145,6 +145,9 @@ func (h *Handlers) updateStockMovement(c *fiber.Ctx) error {
 		Date:     date,
 		EntityID: &entityID,
 	})
+	if err != nil {
+		return err
+	}
 
 	return c.Status(fiber.StatusOK).JSON(stockMovement)
 }
@@ -155,13 +158,15 @@ func (h *Handlers) CancelStockMovementByID(c *fiber.Ctx) error {
 		return nil
 	}
 
-	userIDStr, ok := c.Locals("userID").(string)
+	userIDStr, ok := c.Locals("userId").(string)
 	if !ok {
+		fmt.Printf("userIdStr: %v\n", userIDStr)
 		return fiber.ErrUnauthorized
 	}
 
 	userID, err := uuid.FromString(userIDStr)
 	if err != nil {
+		fmt.Printf("err: %v\n", err)
 		return fiber.ErrUnauthorized
 	}
 

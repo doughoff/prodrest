@@ -125,7 +125,11 @@ func (s *ServiceManager) UpdateStockMovement(ctx context.Context, params *Update
 	}
 
 	if currentStockMovement.Type == "PURCHASE" || currentStockMovement.Type == "SALE" {
-		if params.EntityID == nil {
+		entityUUID, err := params.EntityID.UUIDValue()
+		if err != nil {
+			return nil, constants.NewRequiredFieldError("entityId")
+		}
+		if bytes.Equal(entityUUID.Bytes[:], uuid.Nil.Bytes()) {
 			return nil, constants.NewRequiredFieldError("entityId")
 		}
 	} else {
