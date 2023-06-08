@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
+	"math"
 	"time"
 )
 
@@ -14,6 +15,8 @@ type StockMovement struct {
 	Date      time.Time
 	CreatedAt time.Time
 	UpdatedAt time.Time
+
+	Total int
 
 	EntityID       *pgxuuid.UUID
 	EntityName     string
@@ -34,6 +37,7 @@ type StockMovementItem struct {
 	ProductName     string
 	Quantity        int
 	Price           int
+	Total           int
 	Batch           string
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
@@ -110,6 +114,58 @@ func (r *PgRepository) FetchStockMovements(ctx context.Context, param *FetchStoc
 			return nil, err
 		}
 		result.Items = append(result.Items, &sm)
+	}
+
+	smIDs := make([]pgxuuid.UUID, len(result.Items))
+	for i, sm := range result.Items {
+		smIDs[i] = *sm.ID
+	}
+
+	rows, err = r.db.Query(ctx, `
+		SELECT
+			smi.id,
+			smi.stock_movement_id,
+			smi.product_id,
+			p.name,
+			smi.quantity,
+			smi.price,
+			smi.batch,
+			smi.updated_at,
+			smi.updated_at
+		FROM "stock_movement_items" smi
+		LEFT JOIN products p on p.id = smi.product_id
+		WHERE
+			smi.stock_movement_id = ANY($1::uuid[])`, smIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	smMap := make(map[pgxuuid.UUID]*StockMovement, len(result.Items))
+	for _, sm := range result.Items {
+		smMap[*sm.ID] = sm
+	}
+
+	for rows.Next() {
+		smi := StockMovementItem{}
+		err := rows.Scan(
+			&smi.ID,
+			&smi.StockMovementID,
+			&smi.ProductID,
+			&smi.ProductName,
+			&smi.Quantity,
+			&smi.Price,
+			&smi.Batch,
+			&smi.CreatedAt,
+			&smi.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if sm, ok := smMap[*smi.StockMovementID]; ok {
+			sm.Items = append(sm.Items, &smi)
+			sm.Total += int(math.Round(float64(smi.Quantity*smi.Price) / 1000))
+		}
 	}
 
 	return &result, nil
@@ -227,7 +283,6 @@ type DeleteStockMovementParams struct {
 	UserID *pgxuuid.UUID
 }
 
-// Doest not delete the record, just changes the status to INACTIVE
 func (r *PgRepository) DeleteStockMovement(ctx context.Context, param *DeleteStockMovementParams) (*StockMovement, error) {
 	var sm StockMovement
 	err := r.db.QueryRow(ctx, `
@@ -260,7 +315,6 @@ func (r *PgRepository) DeleteStockMovement(ctx context.Context, param *DeleteSto
 }
 
 func (r *PgRepository) FetchStockMovementByID(ctx context.Context, id *pgxuuid.UUID) (*StockMovement, error) {
-
 	var sm StockMovement
 	err := r.db.QueryRow(ctx, `
 		SELECT
@@ -322,6 +376,8 @@ func (r *PgRepository) FetchStockMovementByID(ctx context.Context, id *pgxuuid.U
 	}
 	defer rows.Close()
 
+	var total int
+
 	sm.Items = make([]*StockMovementItem, 0)
 	for rows.Next() {
 		item := StockMovementItem{}
@@ -341,8 +397,12 @@ func (r *PgRepository) FetchStockMovementByID(ctx context.Context, id *pgxuuid.U
 			return nil, err
 		}
 
+		total = total + int(math.Round(float64(item.Quantity*item.Price)/1000))
+
 		sm.Items = append(sm.Items, &item)
 	}
+
+	sm.Total = total
 
 	if err = rows.Err(); err != nil {
 		return nil, err
