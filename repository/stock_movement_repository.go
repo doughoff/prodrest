@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 	"time"
 )
@@ -22,6 +23,20 @@ type StockMovement struct {
 	CreatedByUserName   string
 	CancelledByUserID   *pgxuuid.UUID
 	CancelledByUserName string
+
+	Items []*StockMovementItem
+}
+
+type StockMovementItem struct {
+	ID              *pgxuuid.UUID
+	StockMovementID *pgxuuid.UUID
+	ProductID       *pgxuuid.UUID
+	ProductName     string
+	Quantity        int
+	Price           int
+	Batch           string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
 
 type FetchStockMovementsParams struct {
@@ -105,11 +120,24 @@ type CreateStockMovementParams struct {
 	Date      time.Time
 	EntityID  *pgxuuid.UUID
 	CreatedBy *pgxuuid.UUID
+	Items     []*CreateStockItem
 }
 
-func (r *PgRepository) CreateStockMovement(ctx context.Context, param *CreateStockMovementParams) (*StockMovement, error) {
-	var sm StockMovement
-	err := r.db.QueryRow(ctx, `
+type CreateStockItem struct {
+	ProductID *pgxuuid.UUID
+	Quantity  int
+	Price     int
+	Batch     string
+}
+
+func (r *PgRepository) CreateStockMovement(ctx context.Context, params *CreateStockMovementParams) (*StockMovement, error) {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var smID pgxuuid.UUID
+	err = tx.QueryRow(ctx, `
 		INSERT INTO "stock_movements" (
 			status,
 			type,
@@ -122,30 +150,47 @@ func (r *PgRepository) CreateStockMovement(ctx context.Context, param *CreateSto
 			$3,
 			$4,
 			$5
-		) RETURNING
-			id,
-			status,
-			type,
-			date,
-		    entity_id,
-		    created_by_user_id,
-			created_at,
-			updated_at
-	`, "ACTIVE", param.Type, param.Date, param.EntityID, param.CreatedBy).Scan(
-		&sm.ID,
-		&sm.Status,
-		&sm.Type,
-		&sm.Date,
-		&sm.EntityID,
-		&sm.CreatedByUserID,
-		&sm.CreatedAt,
-		&sm.UpdatedAt,
+		) RETURNING id
+	`, "ACTIVE", params.Type, params.Date, params.EntityID, params.CreatedBy).Scan(
+		&smID,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &sm, nil
+	fmt.Printf("smID: %v\n", smID)
+
+	for _, item := range params.Items {
+		_, err = tx.Exec(ctx, `
+			INSERT INTO "stock_movement_items" (
+				stock_movement_id,
+				product_id,
+				quantity,
+				price,
+				batch
+			) VALUES (
+				$1,
+				$2,
+				$3,
+				$4,
+				$5
+			) RETURNING id
+		`, smID, item.ProductID, item.Quantity, item.Price, item.Batch)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return nil, err
+	}
+	stockMovement, err := r.FetchStockMovementByID(ctx, &smID)
+	if err != nil {
+		return nil, err
+	}
+
+	return stockMovement, nil
 }
 
 type UpdateStockMovementParams struct {
@@ -155,37 +200,26 @@ type UpdateStockMovementParams struct {
 }
 
 func (r *PgRepository) UpdateStockMovement(ctx context.Context, param *UpdateStockMovementParams) (*StockMovement, error) {
-	var sm StockMovement
+	var smID pgxuuid.UUID
 	err := r.db.QueryRow(ctx, `
 		UPDATE "stock_movements" SET
 			date = $2,
 			entity_id = $3
 		WHERE
 			id = $1
-		RETURNING
-			id,
-			status,
-			type,
-			date,
-		    entity_id,
-		    created_by_user_id,
-			created_at,
-			updated_at
 	`, param.ID, param.Date, param.EntityID).Scan(
-		&sm.ID,
-		&sm.Status,
-		&sm.Type,
-		&sm.Date,
-		&sm.EntityID,
-		&sm.CreatedByUserID,
-		&sm.CreatedAt,
-		&sm.UpdatedAt,
+		&smID,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &sm, nil
+	stockMovement, err := r.FetchStockMovementByID(ctx, &smID)
+	if err != nil {
+		return nil, err
+	}
+
+	return stockMovement, nil
 }
 
 type DeleteStockMovementParams struct {
@@ -226,6 +260,7 @@ func (r *PgRepository) DeleteStockMovement(ctx context.Context, param *DeleteSto
 }
 
 func (r *PgRepository) FetchStockMovementByID(ctx context.Context, id *pgxuuid.UUID) (*StockMovement, error) {
+
 	var sm StockMovement
 	err := r.db.QueryRow(ctx, `
 		SELECT
@@ -248,7 +283,7 @@ func (r *PgRepository) FetchStockMovementByID(ctx context.Context, id *pgxuuid.U
 		LEFT JOIN "users" cu2 ON cu2.id = sm.cancelled_by_user_id
 		WHERE
 			sm.id = $1
-	`, id).Scan(
+	`, &id).Scan(
 		&sm.ID,
 		&sm.Status,
 		&sm.Type,
@@ -264,6 +299,52 @@ func (r *PgRepository) FetchStockMovementByID(ctx context.Context, id *pgxuuid.U
 		&sm.CancelledByUserName,
 	)
 	if err != nil {
+		return nil, err
+	}
+
+	rows, err := r.db.Query(ctx, `
+		SELECT 
+		    	smi.id,
+		    	smi.product_id,
+		    	p.name,
+		    	smi.stock_movement_id,
+		    	smi.quantity,
+		    	smi.price,
+		    	coalesce(batch, ''),
+		    	smi.created_at,
+		    	smi.updated_at
+		FROM "stock_movement_items" smi
+		LEFT JOIN "products" p on smi.product_id = p.id
+		WHERE smi.stock_movement_id = $1
+    `, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	sm.Items = make([]*StockMovementItem, 0)
+	for rows.Next() {
+		item := StockMovementItem{}
+		err := rows.Scan(
+			&item.ID,
+			&item.ProductID,
+			&item.ProductName,
+			&item.StockMovementID,
+			&item.Quantity,
+			&item.Price,
+			&item.Batch,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+		)
+		if err != nil {
+			fmt.Printf("Error while scanning stock_movement_item")
+			return nil, err
+		}
+
+		sm.Items = append(sm.Items, &item)
+	}
+
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 

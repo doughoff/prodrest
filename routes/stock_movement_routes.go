@@ -73,9 +73,17 @@ func (h *Handlers) getStockMovementById(c *fiber.Ctx) error {
 }
 
 type CreateStockMovementBody struct {
-	Type     string    `json:"type"`
-	Date     string    `json:"date"`
-	EntityId uuid.UUID `json:"entityId"`
+	Type     string         `json:"type"`
+	Date     string         `json:"date"`
+	EntityId uuid.UUID      `json:"entityId"`
+	Items    []*CreateItems `json:"items"`
+}
+
+type CreateItems struct {
+	ProductID *uuid.UUID `json:"productId"`
+	Quantity  int        `json:"quantity"`
+	Price     int        `json:"price"`
+	Batch     string     `json:"batch"`
 }
 
 func (h *Handlers) createStockMovement(c *fiber.Ctx) error {
@@ -83,8 +91,6 @@ func (h *Handlers) createStockMovement(c *fiber.Ctx) error {
 	if err := c.BodyParser(params); err != nil {
 		return constants.InvalidBody()
 	}
-
-	fmt.Printf("entityId %+v\n", params.EntityId)
 
 	layout := "2006-01-02"
 	date, err := time.Parse(layout, params.Date)
@@ -102,6 +108,17 @@ func (h *Handlers) createStockMovement(c *fiber.Ctx) error {
 		return fiber.ErrUnauthorized
 	}
 
+	items := make([]*services.CreateStockItem, 0)
+	for _, item := range params.Items {
+		itemUUID := pgxuuid.UUID(item.ProductID.Bytes())
+		items = append(items, &services.CreateStockItem{
+			ProductID: &itemUUID,
+			Quantity:  item.Quantity,
+			Price:     item.Price,
+			Batch:     item.Batch,
+		})
+	}
+
 	pgxUserID := pgxuuid.UUID(userID.Bytes())
 	entityID := pgxuuid.UUID(params.EntityId.Bytes())
 	stockMovement, err := h.sm.CreateStockMovement(c.Context(), &services.CreateStockMovementParams{
@@ -109,6 +126,7 @@ func (h *Handlers) createStockMovement(c *fiber.Ctx) error {
 		Date:     date,
 		EntityID: &entityID,
 		UserID:   &pgxUserID,
+		Items:    items,
 	})
 	if err != nil {
 		return err

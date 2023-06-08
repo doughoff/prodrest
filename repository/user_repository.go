@@ -48,7 +48,6 @@ func (r *PgRepository) GetAllUsers(ctx context.Context, params *GetAllUsersParam
 	users := make([]*User, 0)
 	for rows.Next() {
 		user := User{}
-		rows.FieldDescriptions()
 		err := rows.Scan(
 			&user.ID,
 			&user.Status,
