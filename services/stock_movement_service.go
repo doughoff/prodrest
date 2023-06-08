@@ -1,6 +1,7 @@
 package services
 
 import (
+	"bytes"
 	"context"
 	"github.com/gofrs/uuid/v5"
 	"github.com/hoffax/prodrest/constants"
@@ -78,7 +79,11 @@ func (s *ServiceManager) CreateStockMovement(ctx context.Context, params *Create
 	}
 
 	if params.Type == "PURCHASE" || params.Type == "SALE" {
-		if params.EntityID == nil {
+		entityUUID, err := params.EntityID.UUIDValue()
+		if err != nil {
+			return nil, constants.NewRequiredFieldError("entityId")
+		}
+		if bytes.Equal(entityUUID.Bytes[:], uuid.Nil.Bytes()) {
 			return nil, constants.NewRequiredFieldError("entityId")
 		}
 	} else {
@@ -174,13 +179,8 @@ type FetchStockMovementByIDParams struct {
 	ID *pgxuuid.UUID `validate:"required"`
 }
 
-func (s *ServiceManager) FetchStockMovementByID(ctx context.Context, params *FetchStockMovementByIDParams) (*StockMovementDTO, error) {
-	err := s.validate.Struct(params)
-	if err != nil {
-		return nil, err
-	}
-
-	stockMovement, err := s.repo.FetchStockMovementByID(ctx, params.ID)
+func (s *ServiceManager) FetchStockMovementByID(ctx context.Context, id *pgxuuid.UUID) (*StockMovementDTO, error) {
+	stockMovement, err := s.repo.FetchStockMovementByID(ctx, id)
 	if err != nil {
 		return nil, constants.NewNotFoundError()
 	}

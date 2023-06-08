@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -20,8 +21,25 @@ import (
 	"time"
 )
 
+type CustomTracer struct{}
+
+func (t *CustomTracer) TraceQueryStart(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryStartData) context.Context {
+	log.Printf("Start Query: %s \nArgs: %+v\n", data.SQL, data.Args)
+	return ctx
+}
+
+func (t *CustomTracer) TraceQueryEnd(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryEndData) {
+	if data.Err != nil {
+		fmt.Printf("Query Error: %v\n", data.Err)
+	} else {
+		fmt.Printf("End Query: %s\n", data.CommandTag)
+	}
+}
+
 func Serve() {
-	conn, err := pgx.Connect(context.Background(), os.Getenv("DB_URL"))
+	connConfig, err := pgx.ParseConfig(os.Getenv("DB_URL"))
+	connConfig.Tracer = &CustomTracer{}
+	conn, err := pgx.ConnectConfig(context.Background(), connConfig)
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
@@ -31,7 +49,6 @@ func Serve() {
 			log.Fatalf("Error closing database connection")
 		}
 	}(conn, context.Background())
-	connConfig, err := pgx.ParseConfig(os.Getenv("DB_URL"))
 	connConfig.AfterConnect = func(ctx context.Context, pgconn *pgconn.PgConn) error {
 		pgxuuid.Register(conn.TypeMap())
 		return nil
@@ -64,6 +81,7 @@ func Serve() {
 	handlers.RegisterUserRoutes()
 	handlers.RegisterProductRoutes()
 	handlers.RegisterEntityRoutes()
+	handlers.RegisterStockMovementRoutes()
 
 	err = app.Listen(":3088")
 	if err != nil {
