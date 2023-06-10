@@ -25,7 +25,7 @@ build-container:
 	@docker build -t production-api .
 
 run-container: build-container
-	@docker run -p 8080:8080 --env-file .env production-api
+	@docker run -p 3088:3088 --network host --env-file .env production-api
 
 run-tests:
 	go test ./...
