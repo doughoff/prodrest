@@ -76,8 +76,8 @@ func (r *PgRepository) FetchRecipes(ctx context.Context, params *FetchRecipePara
 	  and r.name ILIKE '%' || $2 || '%'
 	  and r.is_current = true
 	order by r.created_at
-	limit $4
-	offset $5
+	limit $3
+	offset $4
 `, params.StatusOptions, params.Search, params.Limit, params.Offset)
 	if err != nil {
 		return nil, err

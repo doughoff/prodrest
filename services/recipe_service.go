@@ -185,6 +185,11 @@ func (s *ServiceManager) DeleteRecipe(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (s *ServiceManager) FetchRecipe(ctx context.Context, id uuid.UUID) (*RecipeDTO, error) {
-	return &RecipeDTO{}, nil
+func (s *ServiceManager) FetchRecipeByID(ctx context.Context, id *pgxuuid.UUID) (*RecipeDTO, error) {
+	recipe, err := s.repo.GetRecipeByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.toRecipeDTO(recipe), nil
 }

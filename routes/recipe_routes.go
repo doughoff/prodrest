@@ -3,9 +3,10 @@ package routes
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofrs/uuid"
 	"github.com/hoffax/prodrest/constants"
 	"github.com/hoffax/prodrest/services"
-	uuid "github.com/jackc/pgx-gofrs-uuid"
+	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 )
 
 func (h *Handlers) RegisterRecipeRoutes() {
@@ -68,8 +69,9 @@ func (h *Handlers) createRecipe(c *fiber.Ctx) error {
 
 	parsedIngredients := make([]*services.CreateRecipeIngredient, len(body.Ingredients))
 	for i, ingredient := range body.Ingredients {
+		productID := pgxuuid.UUID(ingredient.ProductID.Bytes())
 		parsedIngredients[i] = &services.CreateRecipeIngredient{
-			ProductID: ingredient.ProductID,
+			ProductID: &productID,
 			Quantity:  ingredient.Quantity,
 		}
 	}
@@ -98,15 +100,29 @@ func (h *Handlers) updateRecipe(c *fiber.Ctx) error {
 		return constants.InvalidBody()
 	}
 
+	recipeIngredients := make([]*services.CreateRecipeIngredient, 0)
+	for _, item := range body.Ingredients {
+		productID := pgxuuid.UUID(item.ProductID.Bytes())
+		recipeIngredients = append(recipeIngredients, &services.CreateRecipeIngredient{
+			ProductID: &productID,
+			Quantity:  item.Quantity,
+		})
+	}
+
+	createRecipeParams := &services.CreateRecipeParams{
+		Name:        body.Name,
+		Ingredients: recipeIngredients,
+	}
+
 	response, err := h.sm.UpdateRecipe(c.Context(), &services.UpdateRecipeParams{
-		ID:   recipeId,
-		Name: body.Name,
+		ID:                 recipeId,
+		CreateRecipeParams: *createRecipeParams,
 	})
 	if err != nil {
 		return err
 	}
 
-	return c.Status(fiber.StatusOK).JSON(body)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *Handlers) deleteRecipeById(c *fiber.Ctx) error {
@@ -131,12 +147,10 @@ func (h *Handlers) getRecipeById(c *fiber.Ctx) error {
 		return err
 	}
 
-	//response, err := h.sm.DeleteRecipe(c.Context(), &services.DeleteRecipeParams{
-	//	ID: entityId,
-	//})
-	//if err != nil {
-	//	return uuid.UUID{}, err
-	//}
+	recipe, err := h.sm.FetchRecipeByID(c.Context(), entityId)
+	if err != nil {
+		return err
+	}
 
-	return c.Status(fiber.StatusOK).JSON(entityId)
+	return c.Status(fiber.StatusOK).JSON(recipe)
 }
