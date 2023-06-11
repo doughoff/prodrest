@@ -89,11 +89,11 @@ func (r *PgRepository) FetchStockMovements(ctx context.Context, param *FetchStoc
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	var result FetchStockMovementsResult
 	for rows.Next() {
 		sm := StockMovement{}
-		rows.FieldDescriptions()
 		err := rows.Scan(
 			&result.TotalCount,
 			&sm.ID,
